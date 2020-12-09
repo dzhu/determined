@@ -1,4 +1,5 @@
 import getpass
+import os
 import subprocess
 import sys
 import tempfile
@@ -97,6 +98,10 @@ def _open_shell(master: str, shell: Command, additional_opts: List[str]) -> None
             "-tt",
             "-o",
             "IdentitiesOnly=yes",
+            "-o",
+            "LogLevel=ERROR",
+            "-o",
+            "UserKnownHostsFile={}".format(os.devnull),
             "-i",
             str(fp.name),
             "-p",
