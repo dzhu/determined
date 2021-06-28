@@ -8,6 +8,44 @@
  Version 0.16
 **************
 
+Version 0.16.1
+==============
+
+**Release Date:** June 28, 2021
+
+**New Features**
+
+-  Add support for CPU-based training. This makes it possible to run
+   Determined on clusters without GPUs, including on-prem, AWS, GCP, and
+   Kubernetes-based (default scheduler only) configurations. See the
+   documentation (:ref:`AWS <install-aws>`, :ref:`GCP <install-gcp>`,
+   :ref:`Kubernetes <install-on-kubernetes>`, :ref:`cluster
+   configuration <cluster-configuration>`) for more information on how
+   to set up Determined for CPU-based training.
+
+-  Support using `Filestore <https://cloud.google.com/filestore/>`__ for
+   clusters managed by ``det deploy gcp``. The Filestore instance will
+   automatically be spun up and down, mounted to agents, and
+   bind-mounted into task containers. You can also use a pre-existing
+   Filestore instance.
+
+**Improvements**
+
+-  **Breaking Change:** REST API: Rename ``gpu`` and ``cpu`` fields in
+   ``ResourcePool`` object to ``compute`` and ``aux``.
+
+-  **Breaking Change:** Deploy: In ``det deploy gcp`` and ``det deploy
+   aws``, rename the default compute pool from ``gpu-pool`` to
+   ``compute-pool``. When upgrading a cluster from a previous version,
+   existing pending experiments may error out and need to be
+   resubmitted.
+
+**Fixes**
+
+-  Support using Docker images with ``EXPOSE`` commands as images for
+   notebooks/shells/TensorBoards. Previously, the ``EXPOSE`` command
+   could break proxying through the Determined master.
+
 Version 0.16.0
 ==============
 
