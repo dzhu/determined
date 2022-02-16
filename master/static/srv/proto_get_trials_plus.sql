@@ -116,7 +116,11 @@ SELECT row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
     SELECT extract(epoch from sum(coalesce(a.end_time, now()) - a.start_time))
     FROM allocations a
     WHERE a.task_id = t.task_id
-  ) AS wall_clock_time
+  ) AS wall_clock_time,
+  (
+    SELECT sum((jsonb_each).value::text::int)
+    FROM (SELECT jsonb_each(resources) FROM checkpoints c WHERE c.trial_id = t.id) r
+  ) AS total_checkpoint_size
 FROM searcher_info
   INNER JOIN trials t ON t.id = searcher_info.trial_id
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id

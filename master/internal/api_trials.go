@@ -441,10 +441,25 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
 
-	switch err := a.m.db.QueryProto(
+	return resp, nil
+}
+
+func (a *apiServer) GetTrialWorkloads(_ context.Context, req *apiv1.GetTrialWorkloadsRequest) (
+	*apiv1.GetTrialWorkloadsResponse, error,
+) {
+	resp := &apiv1.GetTrialWorkloadsResponse{}
+	limit := &req.Limit
+	if *limit == 0 {
+		limit = nil
+	}
+
+	switch err := a.m.db.QueryProtof(
 		"proto_get_trial_workloads",
-		&resp.Workloads,
+		[]interface{}{db.OrderByToSQL(req.OrderBy), db.OrderByToSQL(req.OrderBy)},
+		resp,
 		req.TrialId,
+		req.Offset,
+		limit,
 	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d workloads not found:", req.TrialId)

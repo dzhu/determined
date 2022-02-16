@@ -84,6 +84,8 @@ message Trial {
   // The wall clock time is all active time of the cluster for the trial,
   // inclusive of everything (restarts, initiailization, etc), in seconds.
   double wall_clock_time = 12;
+  // The sum of sizes of all resources in all checkpoints for the trial.
+  uint64 total_checkpoint_size = 13;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series
