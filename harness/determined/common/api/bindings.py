@@ -78,32 +78,6 @@ class GetHPImportanceResponseMetricHPImportance:
             "inProgress": self.inProgress if self.inProgress is not None else None,
         }
 
-class GetTrialResponseWorkloadContainer:
-    def __init__(
-        self,
-        checkpoint: "typing.Optional[v1CheckpointWorkload]" = None,
-        training: "typing.Optional[v1MetricsWorkload]" = None,
-        validation: "typing.Optional[v1MetricsWorkload]" = None,
-    ):
-        self.training = training
-        self.validation = validation
-        self.checkpoint = checkpoint
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "GetTrialResponseWorkloadContainer":
-        return cls(
-            training=v1MetricsWorkload.from_json(obj["training"]) if obj.get("training", None) is not None else None,
-            validation=v1MetricsWorkload.from_json(obj["validation"]) if obj.get("validation", None) is not None else None,
-            checkpoint=v1CheckpointWorkload.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "training": self.training.to_json() if self.training is not None else None,
-            "validation": self.validation.to_json() if self.validation is not None else None,
-            "checkpoint": self.checkpoint.to_json() if self.checkpoint is not None else None,
-        }
-
 class TrialEarlyExitExitedReason(enum.Enum):
     EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
@@ -301,6 +275,7 @@ class trialv1Trial:
         endTime: "typing.Optional[str]" = None,
         latestValidation: "typing.Optional[v1MetricsWorkload]" = None,
         runnerState: "typing.Optional[str]" = None,
+        totalCheckpointSize: "typing.Optional[str]" = None,
         wallClockTime: "typing.Optional[float]" = None,
     ):
         self.id = id
@@ -315,6 +290,7 @@ class trialv1Trial:
         self.bestCheckpoint = bestCheckpoint
         self.runnerState = runnerState
         self.wallClockTime = wallClockTime
+        self.totalCheckpointSize = totalCheckpointSize
 
     @classmethod
     def from_json(cls, obj: Json) -> "trialv1Trial":
@@ -331,6 +307,7 @@ class trialv1Trial:
             bestCheckpoint=v1CheckpointWorkload.from_json(obj["bestCheckpoint"]) if obj.get("bestCheckpoint", None) is not None else None,
             runnerState=obj.get("runnerState", None),
             wallClockTime=float(obj["wallClockTime"]) if obj.get("wallClockTime", None) is not None else None,
+            totalCheckpointSize=obj.get("totalCheckpointSize", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -347,6 +324,7 @@ class trialv1Trial:
             "bestCheckpoint": self.bestCheckpoint.to_json() if self.bestCheckpoint is not None else None,
             "runnerState": self.runnerState if self.runnerState is not None else None,
             "wallClockTime": dump_float(self.wallClockTime) if self.wallClockTime is not None else None,
+            "totalCheckpointSize": self.totalCheckpointSize if self.totalCheckpointSize is not None else None,
         }
 
 class v1AckAllocationPreemptionSignalRequest:
@@ -2104,22 +2082,40 @@ class v1GetTrialResponse:
     def __init__(
         self,
         trial: "trialv1Trial",
-        workloads: "typing.Optional[typing.Sequence[GetTrialResponseWorkloadContainer]]" = None,
     ):
         self.trial = trial
-        self.workloads = workloads
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTrialResponse":
         return cls(
             trial=trialv1Trial.from_json(obj["trial"]),
-            workloads=[GetTrialResponseWorkloadContainer.from_json(x) for x in obj["workloads"]] if obj.get("workloads", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "trial": self.trial.to_json(),
-            "workloads": [x.to_json() for x in self.workloads] if self.workloads is not None else None,
+        }
+
+class v1GetTrialWorkloadsResponse:
+    def __init__(
+        self,
+        pagination: "v1Pagination",
+        workloads: "typing.Sequence[v1WorkloadContainer]",
+    ):
+        self.workloads = workloads
+        self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTrialWorkloadsResponse":
+        return cls(
+            workloads=[v1WorkloadContainer.from_json(x) for x in obj["workloads"]],
+            pagination=v1Pagination.from_json(obj["pagination"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "workloads": [x.to_json() for x in self.workloads],
+            "pagination": self.pagination.to_json(),
         }
 
 class v1GetUserResponse:
@@ -5127,6 +5123,32 @@ class v1ValidationHistoryEntry:
             "searcherMetric": dump_float(self.searcherMetric),
         }
 
+class v1WorkloadContainer:
+    def __init__(
+        self,
+        checkpoint: "typing.Optional[v1CheckpointWorkload]" = None,
+        training: "typing.Optional[v1MetricsWorkload]" = None,
+        validation: "typing.Optional[v1MetricsWorkload]" = None,
+    ):
+        self.training = training
+        self.validation = validation
+        self.checkpoint = checkpoint
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1WorkloadContainer":
+        return cls(
+            training=v1MetricsWorkload.from_json(obj["training"]) if obj.get("training", None) is not None else None,
+            validation=v1MetricsWorkload.from_json(obj["validation"]) if obj.get("validation", None) is not None else None,
+            checkpoint=v1CheckpointWorkload.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "training": self.training.to_json() if self.training is not None else None,
+            "validation": self.validation.to_json() if self.validation is not None else None,
+            "checkpoint": self.checkpoint.to_json() if self.checkpoint is not None else None,
+        }
+
 def post_AckAllocationPreemptionSignal(
     session: "client.Session",
     *,
@@ -6391,6 +6413,32 @@ def get_GetTrialCheckpoints(
     if _resp.status_code == 200:
         return v1GetTrialCheckpointsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTrialCheckpoints", _resp)
+
+def get_GetTrialWorkloads(
+    session: "client.Session",
+    *,
+    trialId: int,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+) -> "v1GetTrialWorkloadsResponse":
+    _params = {
+        "limit": limit,
+        "offset": offset,
+        "orderBy": orderBy.value if orderBy else None,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/trials/{trialId}/workloads",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetTrialWorkloadsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTrialWorkloads", _resp)
 
 def get_GetUser(
     session: "client.Session",
