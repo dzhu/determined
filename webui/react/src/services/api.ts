@@ -119,6 +119,12 @@ export const getTrialDetails = generateDetApi<
   Service.TrialDetailsParams, Api.V1GetTrialResponse, Type.TrialDetails
 >(Config.getTrialDetails);
 
+export const getTrialWorkloads = generateDetApi<
+  Service.GetTrialWorkloadsParams,
+  Api.V1GetTrialWorkloadsResponse,
+  Api.V1GetTrialWorkloadsResponse
+>(Config.getTrialWorkloads);
+
 export const createExperiment = generateDetApi<
   Service.CreateExperimentParams, Api.V1CreateExperimentResponse, Type.ExperimentBase
 >(Config.createExperiment);

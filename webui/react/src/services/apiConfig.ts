@@ -31,6 +31,7 @@ export const detApi = {
   Tasks: new Api.TasksApi(ApiConfig),
   Templates: new Api.TemplatesApi(ApiConfig),
   TensorBoards: new Api.TensorboardsApi(ApiConfig),
+  Trials: new Api.TrialsApi(ApiConfig),
   Users: new Api.UsersApi(ApiConfig),
 };
 
@@ -61,9 +62,10 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.StreamingJobs = Api.JobsApiFetchParamCreator(ApiConfig),
   detApi.StreamingProfiler = Api.ProfilerApiFetchParamCreator(config);
   detApi.Tasks = new Api.TasksApi(config);
-  detApi.TensorBoards = new Api.TensorboardsApi(config);
-  detApi.Users = new Api.UsersApi(config);
   detApi.Templates = new Api.TemplatesApi(config);
+  detApi.TensorBoards = new Api.TensorboardsApi(config);
+  detApi.Trials = new Api.TrialsApi(config);
+  detApi.Users = new Api.UsersApi(config);
 };
 
 /* Helpers */
@@ -410,6 +412,20 @@ export const getTrialDetails: Service.DetApi<
     return decoder.decodeTrialResponseToTrialDetails(response);
   },
   request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
+};
+
+export const getTrialWorkloads: Service.DetApi<
+  Service.GetTrialWorkloadsParams, Api.V1GetTrialWorkloadsResponse, Api.V1GetTrialWorkloadsResponse
+> = {
+  name: 'getTrialWorkloads',
+  postProcess: identity,
+  request: (params, options) => detApi.Trials.getTrialWorkloads(
+    params.id,
+    params.orderBy,
+    params.offset,
+    params.limit,
+    options,
+  ),
 };
 
 /* Tasks */

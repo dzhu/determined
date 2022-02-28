@@ -91,6 +91,8 @@ export interface GetTrialsParams extends PaginationParams, SingleEntityParams {
   | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED'>;
 }
 
+export interface GetTrialWorkloadsParams extends PaginationParams, SingleEntityParams {}
+
 export interface GetTaskParams {
   taskId: string;
 }
