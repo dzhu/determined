@@ -15,10 +15,10 @@ import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import TrialRangeHyperparameters from 'pages/TrialDetails/TrialRangeHyperparameters';
 import { paths } from 'routes/utils';
-import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
+import { getExperimentDetails, getTrialDetails, getTrialWorkloads, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
-import { ExperimentBase, TrialDetails } from 'types';
+import { ExperimentBase, TrialDetails, WorkloadGroup } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
@@ -52,6 +52,7 @@ const TrialDetailsComp: React.FC = () => {
     error: undefined,
     isLoading: true,
   });
+  const [ workloads, setWorkloads ] = useState<WorkloadGroup[]>([]);
   const basePath = paths.trialDetails(routeParams.trialId, routeParams.experimentId);
   const trialId = parseInt(routeParams.trialId);
   const trial = trialDetails.data;
@@ -87,11 +88,17 @@ const TrialDetailsComp: React.FC = () => {
 
   const fetchTrialDetails = useCallback(async () => {
     try {
-      const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
-      setTrialDetails(prev => ({ ...prev, data: response, isLoading: false }));
+      const params = { id: trialId };
+      const options = { signal: canceler.signal };
+      const [ details, workloads ] = await Promise.all([
+        getTrialDetails(params, options),
+        getTrialWorkloads(params, options),
+      ]);
+      setTrialDetails(prev => ({ ...prev, data: details, isLoading: false }));
+      setWorkloads(workloads);
     } catch (e) {
       if (!trialDetails.error && !isAborted(e)) {
-        setTrialDetails(prev => ({ ...prev, error: e }));
+        setTrialDetails(prev => ({ ...prev, error: e as Error }));
       }
     }
   }, [ canceler, trialDetails.error, trialId ]);
@@ -151,6 +158,7 @@ const TrialDetailsComp: React.FC = () => {
           experiment={experiment}
           fetchTrialDetails={fetchTrialDetails}
           trial={trial}
+          workloads={workloads}
         />
       )}
       stickyHeader
@@ -161,7 +169,7 @@ const TrialDetailsComp: React.FC = () => {
         onViewLogs={handleViewLogs}>
         <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
           <TabPane key={TabType.Overview} tab="Overview">
-            <TrialDetailsOverview experiment={experiment} trial={trial} />
+            <TrialDetailsOverview experiment={experiment} trial={trial} workloads={workloads} />
           </TabPane>
           <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
             {isSingleTrialExperiment(experiment) ?

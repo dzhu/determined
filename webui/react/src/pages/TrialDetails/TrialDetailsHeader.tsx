@@ -9,13 +9,16 @@ import useCreateExperimentModal, {
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { openOrCreateTensorBoard } from 'services/api';
 import { getStateColorCssVar } from 'themes';
-import { ExperimentAction as Action, ExperimentBase, TrialDetails } from 'types';
+import { ExperimentAction as Action, ExperimentBase, TrialDetails, WorkloadGroup } from 'types';
 import { getWorkload, isMetricsWorkload } from 'utils/workload';
 import { openCommand } from 'wait';
 
-export const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
+export const trialWillNeverHaveData = (
+  trial: TrialDetails,
+  workloads: WorkloadGroup[],
+): boolean => {
   const isTerminal = terminalRunStates.has(trial.state);
-  const workloadsWithSomeMetric = trial.workloads
+  const workloadsWithSomeMetric = workloads
     .map(getWorkload)
     .filter(workload => isMetricsWorkload(workload) && !!workload.metrics);
   return isTerminal && workloadsWithSomeMetric.length === 0;
@@ -25,12 +28,14 @@ interface Props {
   experiment: ExperimentBase;
   fetchTrialDetails: () => void;
   trial: TrialDetails;
+  workloads: WorkloadGroup[];
 }
 
 const TrialDetailsHeader: React.FC<Props> = ({
   experiment,
   fetchTrialDetails,
   trial,
+  workloads,
 }: Props) => {
   const [ isRunningTensorBoard, setIsRunningTensorBoard ] = useState<boolean>(false);
 
@@ -45,7 +50,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
   const headerOptions = useMemo<Option[]>(() => {
     const options: Option[] = [];
 
-    if (!trialWillNeverHaveData(trial)) {
+    if (!trialWillNeverHaveData(trial, workloads)) {
       options.push({
         icon: <Icon name="tensor-board" size="small" />,
         isLoading: isRunningTensorBoard,
@@ -83,6 +88,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
     handleContinueTrial,
     isRunningTensorBoard,
     trial,
+    workloads,
   ]);
 
   return (

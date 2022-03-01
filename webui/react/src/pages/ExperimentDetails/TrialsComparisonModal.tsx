@@ -11,15 +11,14 @@ import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
-import { getTrialDetails } from 'services/api';
+import { getTrialDetails, getTrialWorkloads } from 'services/api';
 import {
-  CheckpointState, CheckpointWorkload, ExperimentBase, MetricName, MetricsWorkload, TrialDetails,
+  ExperimentBase, MetricName, MetricsWorkload, TrialDetails, WorkloadGroup,
 } from 'types';
 import { isNumber } from 'utils/data';
 import handleError from 'utils/error';
 import { extractMetricNames } from 'utils/metric';
 import { humanReadableBytes } from 'utils/string';
-import { checkpointSize } from 'utils/workload';
 
 import css from './TrialsComparisonModal.module.scss';
 
@@ -65,14 +64,20 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   { trials, experiment, onUnselect }: TableProps,
 ) => {
   const [ trialsDetails, setTrialsDetails ] = useState<Record<string, TrialDetails>>({});
+  const [ workloads, setWorkloads ] = useState<Record<string, WorkloadGroup[]>>({});
   const [ canceler ] = useState(new AbortController());
   const [ selectedHyperparameters, setSelectedHyperparameters ] = useState<string[]>([]);
   const [ selectedMetrics, setSelectedMetrics ] = useState<MetricName[]>([]);
 
   const fetchTrialDetails = useCallback(async (trialId) => {
     try {
-      const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
-      setTrialsDetails(prev => ({ ...prev, [trialId]: response }));
+      const options = { signal: canceler.signal };
+      const [ details, workloads ] = await Promise.all([
+        getTrialDetails({ id: trialId }, options),
+        getTrialWorkloads({ id: trialId }, options),
+      ]);
+      setTrialsDetails(prev => ({ ...prev, [trialId]: details }));
+      setWorkloads(prev => ({ ...prev, [trialId]: workloads }));
     } catch (e) {
       handleError(e);
     }
@@ -92,29 +97,29 @@ const TrialsComparisonTable: React.FC<TableProps> = (
 
   const handleTrialUnselect = useCallback((trialId: number) => onUnselect(trialId), [ onUnselect ]);
 
-  const getCheckpointSize = useCallback((trial: TrialDetails) => {
-    const totalBytes = trial.workloads
-      .filter(step => step.checkpoint
-      && step.checkpoint.state === CheckpointState.Completed)
-      .map(step => checkpointSize(step.checkpoint as CheckpointWorkload))
-      .reduce((acc, cur) => acc + cur, 0);
-    return humanReadableBytes(totalBytes);
-  }, []);
+  // const getCheckpointSize = useCallback((trial: TrialDetails) => {
+  //   const totalBytes = trial.workloads
+  //     .filter(step => step.checkpoint
+  //     && step.checkpoint.state === CheckpointState.Completed)
+  //     .map(step => checkpointSize(step.checkpoint as CheckpointWorkload))
+  //     .reduce((acc, cur) => acc + cur, 0);
+  //   return humanReadableBytes(totalBytes);
+  // }, []);
 
-  const totalCheckpointsSizes: Record<string, string> = useMemo(
-    () => Object.fromEntries(Object.values(trialsDetails)
-      .map(trial => [ trial.id, getCheckpointSize(trial) ]))
-    , [ getCheckpointSize, trialsDetails ],
-  );
+  // const totalCheckpointsSizes: Record<string, string> = useMemo(
+  //   () => Object.fromEntries(Object.values(trialsDetails)
+  //     .map(trial => [ trial.id, getCheckpointSize(trial) ]))
+  //   , [ getCheckpointSize, trialsDetails ],
+  // );
 
   const metricNames = useMemo(() => {
     const nameSet: Record<string, MetricName> = {};
     trials.forEach(trial => {
-      extractMetricNames(trialsDetails[trial]?.workloads || [])
+      extractMetricNames(workloads[trial] || [])
         .forEach(item => nameSet[item.name] = (item));
     });
     return Object.values(nameSet);
-  }, [ trialsDetails, trials ]);
+  }, [ trials, workloads ]);
 
   useEffect(() => {
     setSelectedMetrics(metricNames);
@@ -147,7 +152,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     const metricsObj: Record<string, {[key: string]: MetricsWorkload}> = {};
     for (const trial of Object.values(trialsDetails)) {
       metricsObj[trial.id] = {};
-      trial.workloads.forEach(workload => {
+      workloads[trial.id].forEach(workload => {
         if (workload.training) {
           extractLatestMetrics(metricsObj, workload.training, trial.id);
         } else if (workload.validation) {
@@ -165,7 +170,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
       }
     }
     return metricValues;
-  }, [ extractLatestMetrics, trialsDetails ]);
+  }, [ extractLatestMetrics, trialsDetails, workloads ]);
 
   const hyperparameterNames = useMemo(
     () => Object.keys(trialsDetails[trials.first()]?.hyperparameters || {}),
@@ -225,7 +230,9 @@ const TrialsComparisonTable: React.FC<TableProps> = (
               Total Checkpoint Size
             </div>
             {trials.map(trialId => (
-              <div className={css.cell} key={trialId}>{totalCheckpointsSizes[trialId]}</div>
+              <div className={css.cell} key={trialId}>
+                {trialsDetails[trialId].totalCheckpointSize}
+              </div>
             ))}
           </div>
           <div className={[ css.row, css.header, css.spanAll ].join(' ')}>

@@ -13,7 +13,9 @@ import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
-import { ExperimentBase, TrialDetails } from 'types';
+import { getTrialWorkloads } from 'services/api';
+import { V1GetTrialWorkloadsResponse } from 'services/api-ts-sdk';
+import { ExperimentBase, TrialDetails, WorkloadGroup } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparameters';
@@ -60,6 +62,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   const { tab } = useParams<Params>();
   const [ canceler ] = useState(new AbortController());
   const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
+  const [ workloads, setWorkloads ] = useState<WorkloadGroup[]>([]);
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
 
   const basePath = paths.experimentDetails(experiment.id);
@@ -98,8 +101,13 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
     if (!trialId) return;
 
     try {
-      const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
-      setTrialDetails(response);
+      const options = { signal: canceler.signal };
+      const [ details, workloads ] = await Promise.all([
+        getTrialDetails({ id: trialId }, options),
+        getTrialWorkloads({ id: trialId }, options),
+      ]);
+      setTrialDetails(details);
+      setWorkloads(workloads);
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -186,7 +194,11 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
               </>
             )}
             state={loadingState}>
-            <TrialDetailsOverview experiment={experiment} trial={trialDetails as TrialDetails} />
+            <TrialDetailsOverview
+              experiment={experiment}
+              trial={trialDetails as TrialDetails}
+              workloads={workloads}
+            />
           </LoadingWrapper>
         </TabPane>
         <TabPane key="hyperparameters" tab="Hyperparameters">

@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import useSettings from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
-import { ExperimentBase, MetricName, MetricType, TrialDetails } from 'types';
+import { ExperimentBase, MetricName, MetricType, TrialDetails, WorkloadGroup } from 'types';
 import { extractMetricNames } from 'utils/metric';
 
 import TrialChart from './TrialChart';
@@ -13,9 +13,10 @@ import TrialDetailsWorkloads from './TrialDetailsWorkloads';
 export interface Props {
   experiment: ExperimentBase;
   trial: TrialDetails;
+  workloads: WorkloadGroup[];
 }
 
-const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => {
+const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial, workloads }: Props) => {
   const storagePath = `trial-detail/experiment/${experiment.id}`;
   const {
     settings,
@@ -24,7 +25,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
 
   const { defaultMetrics, metricNames, metrics } = useMemo(() => {
     const validationMetric = experiment?.config?.searcher.metric;
-    const metricNames = extractMetricNames(trial?.workloads || []);
+    const metricNames = extractMetricNames(workloads || []);
     const defaultValidationMetric = metricNames.find(metricName => (
       metricName.name === validationMetric && metricName.type === MetricType.Validation
     ));
@@ -37,7 +38,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     });
     const metrics = settingMetrics.length !== 0 ? settingMetrics : defaultMetrics;
     return { defaultMetrics, metricNames, metrics };
-  }, [ experiment?.config?.searcher, settings.metric, trial?.workloads ]);
+  }, [ experiment?.config?.searcher, settings.metric, workloads ]);
 
   const handleMetricChange = useCallback((value: MetricName[]) => {
     const newMetrics = value.map(metricName => `${metricName.type}|${metricName.name}`);
@@ -46,12 +47,12 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
 
   return (
     <div className={css.base}>
-      <TrialInfoBox experiment={experiment} trial={trial} />
+      <TrialInfoBox experiment={experiment} trial={trial} workloads={workloads} />
       <TrialChart
         defaultMetricNames={defaultMetrics}
         metricNames={metricNames}
         metrics={metrics}
-        workloads={trial?.workloads}
+        workloads={workloads}
         onMetricChange={handleMetricChange}
       />
       <TrialDetailsWorkloads
@@ -62,6 +63,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         settings={settings}
         trial={trial}
         updateSettings={updateSettings}
+        workloads={workloads}
       />
     </div>
   );

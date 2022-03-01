@@ -14,7 +14,7 @@ import SelectFilter from 'components/SelectFilter';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import {
   CheckpointDetail, CommandTask, ExperimentBase, MetricName,
-  Step, TrialDetails,
+  Step, TrialDetails, WorkloadGroup,
 } from 'types';
 import { isEqual } from 'utils/data';
 import { extractMetricValue } from 'utils/metric';
@@ -34,6 +34,7 @@ export interface Props {
   settings: Settings;
   trial: TrialDetails;
   updateSettings: (newSettings: Partial<Settings>) => void;
+  workloads: WorkloadGroup[];
 }
 
 const TrialDetailsWorkloads: React.FC<Props> = ({
@@ -42,6 +43,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   metrics,
   settings,
   trial,
+  workloads,
   updateSettings,
 }: Props) => {
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
@@ -114,7 +116,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   }, [ experiment?.config, metrics, settings, trial ]);
 
   const workloadSteps = useMemo(() => {
-    const data = trial?.workloads || [];
+    const data = workloads || [];
     const workloadSteps = workloadsToSteps(data);
     return settings.filter === TrialWorkloadFilter.All
       ? workloadSteps
@@ -128,7 +130,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         }
         return false;
       });
-  }, [ settings.filter, trial?.workloads ]);
+  }, [ settings.filter, workloads ]);
 
   const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
     event.stopPropagation();

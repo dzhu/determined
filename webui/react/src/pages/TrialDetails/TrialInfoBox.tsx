@@ -7,7 +7,8 @@ import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import { ShirtSize } from 'themes';
 import {
-  CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentBase, TrialDetails,
+  CheckpointDetail, CheckpointState, CheckpointWorkload,
+  ExperimentBase, TrialDetails, WorkloadGroup,
 } from 'types';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
@@ -15,9 +16,10 @@ import { checkpointSize } from 'utils/workload';
 interface Props {
   experiment: ExperimentBase;
   trial: TrialDetails;
+  workloads: WorkloadGroup[];
 }
 
-const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
+const TrialInfoBox: React.FC<Props> = ({ experiment, trial, workloads }: Props) => {
   const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
 
   const bestCheckpoint: CheckpointDetail | undefined = useMemo(() => {
@@ -33,13 +35,13 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   }, [ trial.bestAvailableCheckpoint, trial.experimentId, trial.id ]);
 
   const totalCheckpointsSize = useMemo(() => {
-    const totalBytes = trial.workloads
+    const totalBytes = workloads
       .filter(step => step.checkpoint
         && step.checkpoint.state === CheckpointState.Completed)
       .map(step => checkpointSize(step.checkpoint as CheckpointWorkload))
       .reduce((acc, cur) => acc + cur, 0);
     return humanReadableBytes(totalBytes);
-  }, [ trial.workloads ]);
+  }, [ workloads ]);
 
   const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
   const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
