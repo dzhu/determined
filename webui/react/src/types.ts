@@ -1,3 +1,5 @@
+import { string } from 'fp-ts';
+
 import * as Api from 'services/api-ts-sdk';
 
 interface WithPagination {
@@ -436,7 +438,7 @@ export interface TrialItem extends StartEndTimes {
 
 export interface TrialDetails extends TrialItem {
   runnerState?: string;
-  workloads: WorkloadGroup[];
+  totalCheckpointSize?: string;
 }
 
 export interface ExperimentItem {

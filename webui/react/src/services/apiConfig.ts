@@ -380,7 +380,7 @@ export const getExpTrials: Service.DetApi<
   postProcess: (response) => {
     return {
       pagination: response.pagination,
-      trials: response.trials.map(trial => decoder.decodeTrialResponseToTrialDetails({ trial })),
+      trials: response.trials.map(trial => decoder.mapV1GetTrialResponse({ trial })),
     };
   },
   request: (params, options) => {
@@ -409,16 +409,16 @@ export const getTrialDetails: Service.DetApi<
 > = {
   name: 'getTrialDetails',
   postProcess: (response: Api.V1GetTrialResponse) => {
-    return decoder.decodeTrialResponseToTrialDetails(response);
+    return decoder.mapV1GetTrialResponse(response);
   },
   request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
 };
 
 export const getTrialWorkloads: Service.DetApi<
-  Service.GetTrialWorkloadsParams, Api.V1GetTrialWorkloadsResponse, Api.V1GetTrialWorkloadsResponse
+  Service.GetTrialWorkloadsParams, Api.V1GetTrialWorkloadsResponse, Type.WorkloadGroup[]
 > = {
   name: 'getTrialWorkloads',
-  postProcess: identity,
+  postProcess: response => decoder.mapV1GetTrialWorkloadsResponse(response),
   request: (params, options) => detApi.Trials.getTrialWorkloads(
     params.id,
     params.orderBy,

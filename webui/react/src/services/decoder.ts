@@ -461,7 +461,7 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CheckpointDetail
   };
 };
 
-const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem => {
+const mapTrialV1Trial = (data: Sdk.Trialv1Trial): types.TrialItem => {
   return {
     bestAvailableCheckpoint: data.bestCheckpoint && decodeCheckpointWorkload(data.bestCheckpoint),
     bestValidationMetric: data.bestValidation && decodeMetricsWorkload(data.bestValidation),
@@ -476,27 +476,26 @@ const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem => {
   };
 };
 
-export const decodeTrialResponseToTrialDetails = (
+export const mapV1GetTrialResponse = (
   data: Sdk.V1GetTrialResponse,
 ): types.TrialDetails => {
-  const trialItem = decodeV1TrialToTrialItem(data.trial);
-  let workloads;
-
-  if (data.workloads) {
-    workloads = data.workloads.map(ww => ({
-      checkpoint: ww.checkpoint && decodeCheckpointWorkload(ww.checkpoint),
-      training: ww.training && decodeMetricsWorkload(ww.training),
-      validation: ww.validation && decodeMetricsWorkload(ww.validation),
-    }));
-  }
-
+  const trialItem = mapTrialV1Trial(data.trial);
   const EMPTY_STATES = new Set([ 'UNSPECIFIED', '', undefined ]);
 
   return {
     ...trialItem,
     runnerState: EMPTY_STATES.has(data.trial.runnerState) ? undefined : data.trial.runnerState,
-    workloads: workloads || [],
   };
+};
+
+export const mapV1GetTrialWorkloadsResponse = (
+  data: Sdk.V1GetTrialWorkloadsResponse,
+): types.WorkloadGroup[] => {
+  return data.workloads.map(workload => ({
+    checkpoint: workload.checkpoint && decodeCheckpointWorkload(workload.checkpoint),
+    training: workload.training && decodeMetricsWorkload(workload.training),
+    validation: workload.validation && decodeMetricsWorkload(workload.validation),
+  }));
 };
 
 export const jsonToClusterLog = (data: unknown): types.Log => {

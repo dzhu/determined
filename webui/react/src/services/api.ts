@@ -122,7 +122,7 @@ export const getTrialDetails = generateDetApi<
 export const getTrialWorkloads = generateDetApi<
   Service.GetTrialWorkloadsParams,
   Api.V1GetTrialWorkloadsResponse,
-  Api.V1GetTrialWorkloadsResponse
+  Type.WorkloadGroup[]
 >(Config.getTrialWorkloads);
 
 export const createExperiment = generateDetApi<
