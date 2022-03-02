@@ -97,21 +97,6 @@ const TrialsComparisonTable: React.FC<TableProps> = (
 
   const handleTrialUnselect = useCallback((trialId: number) => onUnselect(trialId), [ onUnselect ]);
 
-  // const getCheckpointSize = useCallback((trial: TrialDetails) => {
-  //   const totalBytes = trial.workloads
-  //     .filter(step => step.checkpoint
-  //     && step.checkpoint.state === CheckpointState.Completed)
-  //     .map(step => checkpointSize(step.checkpoint as CheckpointWorkload))
-  //     .reduce((acc, cur) => acc + cur, 0);
-  //   return humanReadableBytes(totalBytes);
-  // }, []);
-
-  // const totalCheckpointsSizes: Record<string, string> = useMemo(
-  //   () => Object.fromEntries(Object.values(trialsDetails)
-  //     .map(trial => [ trial.id, getCheckpointSize(trial) ]))
-  //   , [ getCheckpointSize, trialsDetails ],
-  // );
-
   const metricNames = useMemo(() => {
     const nameSet: Record<string, MetricName> = {};
     trials.forEach(trial => {
@@ -152,7 +137,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     const metricsObj: Record<string, {[key: string]: MetricsWorkload}> = {};
     for (const trial of Object.values(trialsDetails)) {
       metricsObj[trial.id] = {};
-      workloads[trial.id].forEach(workload => {
+      (workloads[trial.id] || []).forEach(workload => {
         if (workload.training) {
           extractLatestMetrics(metricsObj, workload.training, trial.id);
         } else if (workload.validation) {
@@ -231,7 +216,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
             </div>
             {trials.map(trialId => (
               <div className={css.cell} key={trialId}>
-                {trialsDetails[trialId].totalCheckpointSize}
+                {humanReadableBytes(trialsDetails[trialId].totalCheckpointSize ?? 0)}
               </div>
             ))}
           </div>
