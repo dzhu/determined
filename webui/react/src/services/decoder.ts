@@ -473,6 +473,7 @@ const mapTrialV1Trial = (data: Sdk.Trialv1Trial): types.TrialItem => {
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     totalBatchesProcessed: data.totalBatchesProcessed,
+    totalCheckpointSize: parseInt(data.totalCheckpointSize || ''),
   };
 };
 

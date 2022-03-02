@@ -6,20 +6,15 @@ import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import { ShirtSize } from 'themes';
-import {
-  CheckpointDetail, CheckpointState, CheckpointWorkload,
-  ExperimentBase, TrialDetails, WorkloadGroup,
-} from 'types';
+import { CheckpointDetail, ExperimentBase, TrialDetails } from 'types';
 import { humanReadableBytes } from 'utils/string';
-import { checkpointSize } from 'utils/workload';
 
 interface Props {
   experiment: ExperimentBase;
   trial: TrialDetails;
-  workloads: WorkloadGroup[];
 }
 
-const TrialInfoBox: React.FC<Props> = ({ experiment, trial, workloads }: Props) => {
+const TrialInfoBox: React.FC<Props> = ({ experiment, trial }: Props) => {
   const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
 
   const bestCheckpoint: CheckpointDetail | undefined = useMemo(() => {
@@ -33,15 +28,6 @@ const TrialInfoBox: React.FC<Props> = ({ experiment, trial, workloads }: Props) 
       trialId: trial.id,
     };
   }, [ trial.bestAvailableCheckpoint, trial.experimentId, trial.id ]);
-
-  const totalCheckpointsSize = useMemo(() => {
-    const totalBytes = workloads
-      .filter(step => step.checkpoint
-        && step.checkpoint.state === CheckpointState.Completed)
-      .map(step => checkpointSize(step.checkpoint as CheckpointWorkload))
-      .reduce((acc, cur) => acc + cur, 0);
-    return humanReadableBytes(totalBytes);
-  }, [ workloads ]);
 
   const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
   const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
@@ -57,9 +43,11 @@ const TrialInfoBox: React.FC<Props> = ({ experiment, trial, workloads }: Props) 
         <OverviewStats title="Start Time">
           <TimeAgo datetime={trial.startTime} />
         </OverviewStats>
-        <OverviewStats title="Total Checkpoint Size">
-          {totalCheckpointsSize}
-        </OverviewStats>
+        {trial.totalCheckpointSize && (
+          <OverviewStats title="Total Checkpoint Size">
+            {humanReadableBytes(trial.totalCheckpointSize)}
+          </OverviewStats>
+        )}
         {bestCheckpoint && (
           <OverviewStats title="Best Checkpoint" onClick={handleShowBestCheckpoint}>
             Batch {bestCheckpoint.batch}

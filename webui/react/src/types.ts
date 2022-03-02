@@ -434,11 +434,11 @@ export interface TrialItem extends StartEndTimes {
   latestValidationMetric?: MetricsWorkload;
   state: RunState;
   totalBatchesProcessed: number;
+  totalCheckpointSize?: number;
 }
 
 export interface TrialDetails extends TrialItem {
   runnerState?: string;
-  totalCheckpointSize?: string;
 }
 
 export interface ExperimentItem {

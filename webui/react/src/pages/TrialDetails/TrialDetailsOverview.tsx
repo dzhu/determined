@@ -47,7 +47,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial, workloads }:
 
   return (
     <div className={css.base}>
-      <TrialInfoBox experiment={experiment} trial={trial} workloads={workloads} />
+      <TrialInfoBox experiment={experiment} trial={trial} />
       <TrialChart
         defaultMetricNames={defaultMetrics}
         metricNames={metricNames}
