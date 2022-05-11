@@ -1,0 +1,7 @@
+[Unit]
+Description=Determined master Docker container
+
+[Service]
+ExecStartPre=docker pull determinedai/determined-master:0.18.0
+ExecStart=docker run --rm --network determined -p 8081:8080 -v /tmp/master.yaml:/etc/determined/master.yaml determinedai/determined-master:0.18.0
+ExecStartPost=sh -c 'while ! nc -z localhost 8081; do sleep .1; done'

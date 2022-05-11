@@ -1,0 +1,7 @@
+[Unit]
+Description=Determined master proxy
+Requires=determined-master-docker.service
+After=determined-master-docker.service
+
+[Service]
+ExecStart=/lib/systemd/systemd-socket-proxyd 127.0.0.1:8081
